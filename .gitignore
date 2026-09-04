@@ -1,0 +1,17 @@
+# Dataset files
+data/**/*.mat
+
+# Training outputs
+outputs/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# IDE settings
+.idea/
+.vscode/
+
+# System files
+.DS_Store
+Thumbs.db

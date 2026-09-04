@@ -1,0 +1,178 @@
+# FE2MT
+
+## Frequency-Enhanced Embedding Multimodal Transformer for Collaborative Classification of Hyperspectral and LiDAR Data
+
+> **Paper Status:** Under Review
+
+FE2MT is a frequency-enhanced multimodal Transformer framework for collaborative classification of hyperspectral imagery (HSI) and LiDAR data. The framework jointly exploits local multidomain representations and global multimodal interactions to improve complementary feature learning across heterogeneous modalities.
+
+Specifically, FE2MT first constructs modality-specific spatial or spectral-spatial representations together with frequency-domain features extracted through wavelet decomposition. These complementary representations are adaptively integrated to form enhanced HSI and LiDAR token embeddings. Subsequently, a multimodal Transformer encoder progressively performs spatial self-attention enhancement, adaptive dual-modal feature alignment, spectral self-attention enhancement, and bidirectional cross-attention fusion. Finally, global CLS representations and target-centered local tokens from both modalities are jointly utilized for classification.
+
+## Framework
+
+<p align="center">
+  <img src="figures/framework.jpg" width="95%">
+</p>
+
+<p align="center">
+  Overall architecture of the proposed FE2MT.
+</p>
+
+## Datasets
+
+Experiments are conducted on three widely used HSI--LiDAR datasets: Houston2013, Muufl, and Trento.
+
+For all three datasets, 20 labeled samples per class are randomly selected for training, while the remaining labeled samples are used for testing. The random sampling procedure is repeated over 10 independent runs with different random seeds, and the final performance is reported in terms of the mean and standard deviation of the evaluation metrics.
+
+### Data Preparation
+
+The datasets should be organized as follows:
+
+```text
+data/
+├── Houston2013/
+│   ├── hsi.mat
+│   ├── lidar.mat
+│   └── gt.mat
+├── Muufl/
+│   ├── hsi.mat
+│   ├── lidar.mat
+│   └── gt.mat
+└── Trento/
+    ├── hsi.mat
+    ├── lidar.mat
+    └── gt.mat
+```
+
+The variables stored in the MAT files should be named `HSI`, `LiDAR`, and `gt`, respectively. The HSI and LiDAR data are normalized independently using per-band min-max normalization before patch extraction.
+
+## Requirements
+
+The experiments were conducted with the following environment:
+
+- Python 3.13.2
+- PyTorch 2.7.1
+- CUDA 12.8
+- NumPy 2.2.6
+- SciPy 1.16.1
+- scikit-learn 1.7.1
+
+Install the required Python packages using:
+
+```bash
+pip install -r requirements.txt
+```
+
+GPU acceleration is recommended for training, while CPU execution is also supported.
+
+## Project Structure
+
+```text
+FE2MT/
+├── data/
+│   ├── Houston2013/
+│   │   ├── hsi.mat
+│   │   ├── lidar.mat
+│   │   └── gt.mat
+│   ├── Muufl/
+│   │   ├── hsi.mat
+│   │   ├── lidar.mat
+│   │   └── gt.mat
+│   └── Trento/
+│       ├── hsi.mat
+│       ├── lidar.mat
+│       └── gt.mat
+├── figures/
+│   ├── framework.jpg
+│   ├── houston_result.jpg
+│   ├── muufl_result.jpg
+│   └── trento_result.jpg
+├── data_loader.py
+├── fe2mt.py
+├── train.py
+├── requirements.txt
+├── README.md
+└── .gitignore
+```
+
+- `data_loader.py`: data loading, preprocessing, sample splitting, and patch extraction.
+- `fe2mt.py`: implementation of the proposed FE2MT model.
+- `train.py`: model training, evaluation, and result recording.
+- `figures/`: framework and classification result figures used in this repository.
+
+## Usage
+
+Train FE2MT on the three datasets using the following commands.
+
+### Houston2013
+
+```bash
+python train.py --dataset_root data/Houston2013
+```
+
+### Muufl
+
+```bash
+python train.py --dataset_root data/Muufl
+```
+
+### Trento
+
+```bash
+python train.py --dataset_root data/Trento
+```
+
+By default, the training configuration is:
+
+- 20 training samples per class
+- Patch size: 12
+- Embedding dimension: 128
+- Transformer depth: 4
+- Number of attention heads: 8
+- Batch size: 64
+- Learning rate: 1e-4
+- Number of runs: 10
+
+Training logs and final results are automatically saved under:
+
+```text
+outputs/<dataset_name>/
+```
+
+Each run generates a separate training log, and `results.txt` summarizes the final results over all runs.
+
+## Results
+
+The quantitative results are reported as the mean and standard deviation over 10 independent runs.
+
+| Dataset | OA (%) | AA (%) | Kappa (%) |
+|:---|---:|---:|---:|
+| Houston2013 | 0.00 ± 0.00 | 0.00 ± 0.00 | 0.00 ± 0.00 |
+| Muufl | 0.00 ± 0.00 | 0.00 ± 0.00 | 0.00 ± 0.00 |
+| Trento | 0.00 ± 0.00 | 0.00 ± 0.00 | 0.00 ± 0.00 |
+
+### Classification Maps
+
+<p align="center">
+  <img src="figures/houston_result.jpg" width="85%">
+</p>
+
+<p align="center">
+  Classification result on the Houston2013 dataset.
+</p>
+
+<p align="center">
+  <img src="figures/muufl_result.jpg" width="85%">
+</p>
+
+<p align="center">
+  Classification result on the Muufl dataset.
+</p>
+
+<p align="center">
+  <img src="figures/trento_result.jpg" width="85%">
+</p>
+
+<p align="center">
+  Classification result on the Trento dataset.
+</p>
