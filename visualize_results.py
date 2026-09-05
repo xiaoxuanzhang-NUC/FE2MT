@@ -241,7 +241,7 @@ def save_result_figure(
     fig, axes = plt.subplots(1, 3, figsize=(15, 5))
 
     axes[0].imshow(rgb)
-    axes[0].set_title("HSI")
+    axes[0].set_title("HSI", fontsize=18, pad=10)
 
     axes[1].imshow(
         gt,
@@ -249,7 +249,7 @@ def save_result_figure(
         norm=norm,
         interpolation="nearest",
     )
-    axes[1].set_title("Ground Truth")
+    axes[1].set_title("Ground Truth", fontsize=20, pad=10)
 
     axes[2].imshow(
         prediction_map,
@@ -257,7 +257,11 @@ def save_result_figure(
         norm=norm,
         interpolation="nearest",
     )
-    axes[2].set_title(f"FE2MT (OA = {oa * 100:.2f}%)")
+    axes[2].set_title(
+        f"FE2MT (OA = {oa * 100:.2f}%)",
+        fontsize=20,
+        pad=10,
+    )
 
     for axis in axes:
         axis.axis("off")
