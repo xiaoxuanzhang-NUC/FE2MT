@@ -22,7 +22,7 @@ Specifically, FE2MT first constructs modality-specific spatial or spectral-spati
 
 Experiments are conducted on three widely used HSI--LiDAR datasets: Houston2013, Muufl, and Trento.
 
-For all three datasets, 20 labeled samples per class are randomly selected for training, while the remaining labeled samples are used for testing. The random sampling procedure is repeated over 10 independent runs with different random seeds, and the final performance is reported in terms of the mean and standard deviation of the evaluation metrics.
+For Houston2013 and Trento, 20 labeled samples per class are randomly selected for training, while 60 labeled samples per class are used for Muufl. The remaining labeled samples are used for testing. The random sampling procedure is repeated over 10 independent runs with different random seeds, and the final performance is reported in terms of the mean and standard deviation of the evaluation metrics.
 
 ### Data Preparation
 
@@ -116,7 +116,7 @@ python train.py --dataset_root data/Houston2013
 ### Muufl
 
 ```bash
-python train.py --dataset_root data/Muufl
+python train.py --dataset_root data/Muufl --train_per_class 60
 ```
 
 ### Trento
@@ -125,9 +125,9 @@ python train.py --dataset_root data/Muufl
 python train.py --dataset_root data/Trento
 ```
 
-By default, the training configuration is:
+The experimental configuration is:
 
-- 20 training samples per class
+- Training samples per class: 20 for Houston2013, 60 for Muufl, and 20 for Trento
 - Patch size: 12
 - Embedding dimension: 128
 - Transformer depth: 4

@@ -7,7 +7,12 @@ from pathlib import Path
 import numpy as np
 import torch
 import torch.nn as nn
-from sklearn.metrics import accuracy_score, balanced_accuracy_score, cohen_kappa_score
+from sklearn.metrics import (
+    accuracy_score,
+    balanced_accuracy_score,
+    cohen_kappa_score,
+    recall_score,
+)
 
 from data_loader import get_dataloaders
 from fe2mt import FE2MT
@@ -25,12 +30,25 @@ def set_seed(seed: int) -> None:
     torch.backends.cudnn.benchmark = False
 
 
-def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, float]:
-    """Compute OA, AA, and Cohen's kappa."""
+def compute_metrics(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    num_classes: int,
+) -> dict[str, float | list[float]]:
+    """Compute OA, AA, Cohen's kappa, and class-wise accuracy."""
+    class_accuracy = recall_score(
+        y_true,
+        y_pred,
+        labels=np.arange(num_classes),
+        average=None,
+        zero_division=0,
+    )
+
     return {
         "OA": float(accuracy_score(y_true, y_pred)),
         "AA": float(balanced_accuracy_score(y_true, y_pred)),
         "Kappa": float(cohen_kappa_score(y_true, y_pred)),
+        "CA": [float(value) for value in class_accuracy],
     }
 
 
@@ -40,7 +58,8 @@ def train_one_epoch(
     criterion: nn.Module,
     optimizer: torch.optim.Optimizer,
     device: torch.device,
-) -> tuple[float, dict[str, float]]:
+    num_classes: int,
+) -> tuple[float, dict[str, float | list[float]]]:
     """Train the model for one epoch."""
     model.train()
 
@@ -67,7 +86,11 @@ def train_one_epoch(
         y_true.append(labels.detach().cpu().numpy())
         y_pred.append(logits.argmax(dim=1).detach().cpu().numpy())
 
-    metrics = compute_metrics(np.concatenate(y_true), np.concatenate(y_pred))
+    metrics = compute_metrics(
+        np.concatenate(y_true),
+        np.concatenate(y_pred),
+        num_classes,
+    )
     return total_loss / total_samples, metrics
 
 
@@ -77,7 +100,8 @@ def evaluate(
     data_loader,
     criterion: nn.Module,
     device: torch.device,
-) -> tuple[float, dict[str, float]]:
+    num_classes: int,
+) -> tuple[float, dict[str, float | list[float]]]:
     """Evaluate the model on a data loader."""
     model.eval()
 
@@ -101,8 +125,20 @@ def evaluate(
         y_true.append(labels.cpu().numpy())
         y_pred.append(logits.argmax(dim=1).cpu().numpy())
 
-    metrics = compute_metrics(np.concatenate(y_true), np.concatenate(y_pred))
+    metrics = compute_metrics(
+        np.concatenate(y_true),
+        np.concatenate(y_pred),
+        num_classes,
+    )
     return total_loss / total_samples, metrics
+
+
+def format_class_accuracy(class_accuracy: list[float]) -> str:
+    """Format class-wise accuracy for logging."""
+    return " | ".join(
+        f"C{class_idx:02d} {accuracy * 100:.2f}"
+        for class_idx, accuracy in enumerate(class_accuracy, start=1)
+    )
 
 
 def parse_args() -> argparse.Namespace:
@@ -209,12 +245,14 @@ def main() -> None:
                     criterion,
                     optimizer,
                     device,
+                    num_classes,
                 )
                 test_loss, test_metrics = evaluate(
                     model,
                     test_loader,
                     criterion,
                     device,
+                    num_classes,
                 )
 
                 if test_metrics["OA"] > best_oa:
@@ -256,15 +294,32 @@ def main() -> None:
                 f"AA {best_metrics['AA'] * 100:.2f} | "
                 f"Kappa {best_metrics['Kappa'] * 100:.2f}"
             )
+            best_ca_log = (
+                "Best class accuracy | "
+                + format_class_accuracy(best_metrics["CA"])
+            )
+
             print(best_log)
+            print(best_ca_log)
             log_file.write(best_log + "\n")
+            log_file.write(best_ca_log + "\n")
 
         run_metrics.append(best_metrics)
         best_epochs.append(best_epoch)
 
-    oa = np.array([metrics["OA"] for metrics in run_metrics])
-    aa = np.array([metrics["AA"] for metrics in run_metrics])
-    kappa = np.array([metrics["Kappa"] for metrics in run_metrics])
+    oa = np.array([metrics["OA"] for metrics in run_metrics], dtype=np.float64)
+    aa = np.array([metrics["AA"] for metrics in run_metrics], dtype=np.float64)
+    kappa = np.array(
+        [metrics["Kappa"] for metrics in run_metrics],
+        dtype=np.float64,
+    )
+    class_accuracy = np.array(
+        [metrics["CA"] for metrics in run_metrics],
+        dtype=np.float64,
+    )
+
+    ca_mean = class_accuracy.mean(axis=0)
+    ca_std = class_accuracy.std(axis=0)
     best_run = int(np.argmax(oa)) + 1
 
     final_lines = [
@@ -281,6 +336,10 @@ def main() -> None:
             f"Kappa {metrics['Kappa'] * 100:.2f} | "
             f"Best epoch {best_epochs[idx - 1]}"
         )
+        final_lines.append(
+            f"Run {idx} CA: "
+            + format_class_accuracy(metrics["CA"])
+        )
 
     final_lines.extend(
         [
@@ -288,8 +347,18 @@ def main() -> None:
             f"OA:    {oa.mean() * 100:.2f} ± {oa.std() * 100:.2f}",
             f"AA:    {aa.mean() * 100:.2f} ± {aa.std() * 100:.2f}",
             f"Kappa: {kappa.mean() * 100:.2f} ± {kappa.std() * 100:.2f}",
+            "Class-wise accuracy (mean ± std):",
         ]
     )
+
+    for class_idx, (mean_value, std_value) in enumerate(
+        zip(ca_mean, ca_std),
+        start=1,
+    ):
+        final_lines.append(
+            f"Class {class_idx:02d}: "
+            f"{mean_value * 100:.2f} ± {std_value * 100:.2f}"
+        )
 
     print("=" * 72)
     print(f"Final results over {args.runs} run(s)")
