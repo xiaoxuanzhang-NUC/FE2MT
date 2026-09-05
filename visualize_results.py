@@ -48,8 +48,7 @@ def ensure_hwc(
             array = np.transpose(array, (1, 2, 0))
         else:
             raise ValueError(
-                f"{name} spatial shape mismatch: "
-                f"{array.shape} vs {spatial_shape}"
+                f"{name} spatial shape mismatch: {array.shape} vs {spatial_shape}"
             )
     else:
         raise ValueError(f"{name} should be 2D or 3D, got {array.shape}")
@@ -65,7 +64,9 @@ def min_max_normalize(array: np.ndarray, eps: float = 1e-6) -> np.ndarray:
     return (array - array_min) / (array_max - array_min + eps)
 
 
-def load_scene(dataset_root: Path):
+def load_scene(
+    dataset_root: Path,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Load and normalize HSI, LiDAR, and ground-truth data."""
     hsi_path = dataset_root / "hsi.mat"
     lidar_path = dataset_root / "lidar.mat"
@@ -94,6 +95,7 @@ def find_best_run(results_path: Path) -> int:
 
     text = results_path.read_text(encoding="utf-8")
     match = re.search(r"Best run by OA:\s*(\d+)", text)
+
     if match is None:
         raise ValueError(
             "Best run information was not found in results.txt. "
@@ -123,6 +125,7 @@ def predict_scene(
         patch_size=patch_size,
         pad_mode=pad_mode,
     )
+
     data_loader = DataLoader(
         dataset,
         batch_size=batch_size,
@@ -132,7 +135,6 @@ def predict_scene(
 
     prediction_map = np.zeros_like(gt, dtype=np.int64)
     offset = 0
-
     model.eval()
 
     for hsi_patch, lidar_patch, _ in data_loader:
@@ -163,7 +165,9 @@ def make_pseudo_rgb(
             round((num_bands - 1) * 0.25),
         ]
 
-    if len(bands) != 3 or any(band < 0 or band >= num_bands for band in bands):
+    if len(bands) != 3 or any(
+        band < 0 or band >= num_bands for band in bands
+    ):
         raise ValueError(
             f"RGB band indices must contain three values in [0, {num_bands - 1}]."
         )
@@ -182,7 +186,9 @@ def make_pseudo_rgb(
     return rgb
 
 
-def build_label_colormap(num_classes: int):
+def build_label_colormap(
+    num_classes: int,
+) -> tuple[ListedColormap, BoundaryNorm]:
     """Create a shared colormap for ground truth and predictions."""
     base = plt.get_cmap("tab20")
     colors = [(0.0, 0.0, 0.0, 1.0)]
@@ -195,20 +201,26 @@ def build_label_colormap(num_classes: int):
         np.arange(-0.5, num_classes + 1.5, 1.0),
         cmap.N,
     )
+
     return cmap, norm
 
 
-def default_output_path(project_root: Path, dataset_name: str) -> Path:
+def default_output_path(
+    project_root: Path,
+    dataset_name: str,
+) -> Path:
     """Return the README-compatible result image path."""
-    names = {
+    filenames = {
         "houston2013": "houston_result.jpg",
         "muufl": "muufl_result.jpg",
         "trento": "trento_result.jpg",
     }
-    filename = names.get(
+
+    filename = filenames.get(
         dataset_name.lower(),
         f"{dataset_name.lower()}_result.jpg",
     )
+
     return project_root / "figures" / filename
 
 
@@ -218,9 +230,11 @@ def save_result_figure(
     prediction_map: np.ndarray,
     output_path: Path,
     rgb_bands: list[int] | None,
+    oa: float,
 ) -> None:
     """Save HSI, ground-truth, and FE2MT prediction maps."""
     num_classes = int(gt.max())
+
     rgb = make_pseudo_rgb(hsi, rgb_bands)
     cmap, norm = build_label_colormap(num_classes)
 
@@ -229,7 +243,12 @@ def save_result_figure(
     axes[0].imshow(rgb)
     axes[0].set_title("HSI")
 
-    axes[1].imshow(gt, cmap=cmap, norm=norm, interpolation="nearest")
+    axes[1].imshow(
+        gt,
+        cmap=cmap,
+        norm=norm,
+        interpolation="nearest",
+    )
     axes[1].set_title("Ground Truth")
 
     axes[2].imshow(
@@ -238,7 +257,7 @@ def save_result_figure(
         norm=norm,
         interpolation="nearest",
     )
-    axes[2].set_title("FE2MT")
+    axes[2].set_title(f"FE2MT (OA = {oa * 100:.2f}%)")
 
     for axis in axes:
         axis.axis("off")
@@ -246,12 +265,14 @@ def save_result_figure(
     fig.tight_layout(pad=0.8)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
+
     fig.savefig(
         output_path,
         dpi=300,
         bbox_inches="tight",
         pil_kwargs={"quality": 95},
     )
+
     plt.close(fig)
 
 
@@ -261,17 +282,38 @@ def parse_args() -> argparse.Namespace:
         description="Visualize FE2MT whole-scene classification results."
     )
 
-    parser.add_argument("--dataset_root", type=str, default="data/Houston2013")
+    parser.add_argument(
+        "--dataset_root",
+        type=str,
+        default="data/Houston2013",
+    )
     parser.add_argument(
         "--run",
         type=int,
         default=None,
         help="Run number to visualize. Defaults to the run with the highest OA.",
     )
-    parser.add_argument("--batch_size", type=int, default=256)
-    parser.add_argument("--num_workers", type=int, default=0)
-    parser.add_argument("--pad_mode", type=str, default="symmetric")
-    parser.add_argument("--device", type=str, default="cuda", choices=["cuda", "cpu"])
+    parser.add_argument(
+        "--batch_size",
+        type=int,
+        default=256,
+    )
+    parser.add_argument(
+        "--num_workers",
+        type=int,
+        default=0,
+    )
+    parser.add_argument(
+        "--pad_mode",
+        type=str,
+        default="symmetric",
+    )
+    parser.add_argument(
+        "--device",
+        type=str,
+        default="cuda",
+        choices=["cuda", "cpu"],
+    )
     parser.add_argument(
         "--rgb_bands",
         type=int,
@@ -295,6 +337,7 @@ def main() -> None:
     project_root = Path(__file__).resolve().parent
 
     dataset_root = Path(args.dataset_root)
+
     if not dataset_root.is_absolute():
         dataset_root = project_root / dataset_root
 
@@ -302,12 +345,19 @@ def main() -> None:
     output_dir = project_root / "outputs" / dataset_name
 
     run_number = args.run
+
     if run_number is None:
         run_number = find_best_run(output_dir / "results.txt")
 
-    checkpoint_path = output_dir / f"best_model_run{run_number}.pth"
+    checkpoint_path = (
+        output_dir
+        / f"best_model_run{run_number}.pth"
+    )
+
     if not checkpoint_path.exists():
-        raise FileNotFoundError(f"Checkpoint not found: {checkpoint_path}")
+        raise FileNotFoundError(
+            f"Checkpoint not found: {checkpoint_path}"
+        )
 
     if args.device == "cuda" and torch.cuda.is_available():
         device = torch.device("cuda")
@@ -321,23 +371,35 @@ def main() -> None:
     )
 
     model_config = checkpoint["model_config"]
+
     model = FE2MT(**model_config).to(device)
     model.load_state_dict(checkpoint["model_state_dict"])
 
     hsi, lidar, gt = load_scene(dataset_root)
 
     if hsi.shape[-1] != model_config["hsi_channels"]:
-        raise ValueError("HSI channel count does not match the checkpoint.")
+        raise ValueError(
+            "HSI channel count does not match the checkpoint."
+        )
+
     if lidar.shape[-1] != model_config["lidar_channels"]:
-        raise ValueError("LiDAR channel count does not match the checkpoint.")
+        raise ValueError(
+            "LiDAR channel count does not match the checkpoint."
+        )
+
     if int(gt.max()) != model_config["num_classes"]:
-        raise ValueError("Number of classes does not match the checkpoint.")
+        raise ValueError(
+            "Number of classes does not match the checkpoint."
+        )
 
     print(f"Dataset:    {dataset_name}")
     print(f"Run:        {run_number}")
     print(f"Checkpoint: {checkpoint_path}")
     print(f"Best epoch: {checkpoint['epoch']}")
-    print(f"Best OA:    {checkpoint['metrics']['OA'] * 100:.2f}")
+    print(
+        f"Best OA:    "
+        f"{checkpoint['metrics']['OA'] * 100:.2f}"
+    )
 
     prediction_map = predict_scene(
         model=model,
@@ -352,9 +414,13 @@ def main() -> None:
     )
 
     if args.output is None:
-        output_path = default_output_path(project_root, dataset_name)
+        output_path = default_output_path(
+            project_root,
+            dataset_name,
+        )
     else:
         output_path = Path(args.output)
+
         if not output_path.is_absolute():
             output_path = project_root / output_path
 
@@ -364,6 +430,7 @@ def main() -> None:
         prediction_map=prediction_map,
         output_path=output_path,
         rgb_bands=args.rgb_bands,
+        oa=checkpoint["metrics"]["OA"],
     )
 
     print(f"Saved:      {output_path}")
