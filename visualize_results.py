@@ -283,15 +283,13 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "--dataset_root",
-        type=str,
-        default="data/Houston2013",
-    )
-    parser.add_argument(
         "--run",
         type=int,
         default=None,
-        help="Run number to visualize. Defaults to the run with the highest OA.",
+        help=(
+            "Run number to visualize for all available datasets. "
+            "Defaults to the run with the highest OA of each dataset."
+        ),
     )
     parser.add_argument(
         "--batch_size",
@@ -322,26 +320,17 @@ def parse_args() -> argparse.Namespace:
         metavar=("R", "G", "B"),
         help="Optional zero-based HSI band indices for pseudo-RGB visualization.",
     )
-    parser.add_argument(
-        "--output",
-        type=str,
-        default=None,
-        help="Optional output image path.",
-    )
 
     return parser.parse_args()
 
 
-def main() -> None:
-    args = parse_args()
-    project_root = Path(__file__).resolve().parent
-
-    dataset_root = Path(args.dataset_root)
-
-    if not dataset_root.is_absolute():
-        dataset_root = project_root / dataset_root
-
-    dataset_name = dataset_root.name
+def visualize_dataset(
+    project_root: Path,
+    dataset_name: str,
+    args: argparse.Namespace,
+) -> None:
+    """Visualize one dataset."""
+    dataset_root = project_root / "data" / dataset_name
     output_dir = project_root / "outputs" / dataset_name
 
     run_number = args.run
@@ -413,16 +402,10 @@ def main() -> None:
         device=device,
     )
 
-    if args.output is None:
-        output_path = default_output_path(
-            project_root,
-            dataset_name,
-        )
-    else:
-        output_path = Path(args.output)
-
-        if not output_path.is_absolute():
-            output_path = project_root / output_path
+    output_path = default_output_path(
+        project_root,
+        dataset_name,
+    )
 
     save_result_figure(
         hsi=hsi,
@@ -434,6 +417,43 @@ def main() -> None:
     )
 
     print(f"Saved:      {output_path}")
+    print()
+
+
+def main() -> None:
+    args = parse_args()
+    project_root = Path(__file__).resolve().parent
+
+    dataset_names = [
+        "Houston2013",
+        "Muufl",
+        "Trento",
+    ]
+
+    available_datasets = [
+        dataset_name
+        for dataset_name in dataset_names
+        if (project_root / "outputs" / dataset_name).is_dir()
+    ]
+
+    if not available_datasets:
+        raise FileNotFoundError(
+            "No dataset result directories were found in outputs/. "
+            "Expected one or more of: Houston2013, Muufl, Trento."
+        )
+
+    print(
+        "Available result datasets: "
+        + ", ".join(available_datasets)
+    )
+    print()
+
+    for dataset_name in available_datasets:
+        visualize_dataset(
+            project_root=project_root,
+            dataset_name=dataset_name,
+            args=args,
+        )
 
 
 if __name__ == "__main__":

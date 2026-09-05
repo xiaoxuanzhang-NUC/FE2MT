@@ -162,9 +162,9 @@ The quantitative results are reported as the mean and standard deviation over 10
 
 | Dataset | OA (%) | AA (%) | Kappa (%) |
 |:---|---:|---:|---:|
-| Houston2013 | 0.00 ± 0.00 | 0.00 ± 0.00 | 0.00 ± 0.00 |
-| Muufl | 0.00 ± 0.00 | 0.00 ± 0.00 | 0.00 ± 0.00 |
-| Trento | 0.00 ± 0.00 | 0.00 ± 0.00 | 0.00 ± 0.00 |
+| Houston2013 | 95.65 ± 0.65 | 96.30 ± 0.53 | 95.30 ± 0.71 |
+| Muufl | 88.71 ± 0.63 | 88.98 ± 0.51 | 85.27 ± 0.78 |
+| Trento | 99.20 ± 0.37 | 98.71 ± 0.41 | 98.93 ± 0.49 |
 
 ### Classification Maps
 
