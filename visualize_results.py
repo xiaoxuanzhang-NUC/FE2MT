@@ -249,7 +249,7 @@ def save_result_figure(
         norm=norm,
         interpolation="nearest",
     )
-    axes[1].set_title("Ground Truth", fontsize=20, pad=10)
+    axes[1].set_title("Ground Truth", fontsize=18, pad=10)
 
     axes[2].imshow(
         prediction_map,
