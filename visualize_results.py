@@ -259,7 +259,7 @@ def save_result_figure(
     )
     axes[2].set_title(
         f"FE2MT (OA = {oa * 100:.2f}%)",
-        fontsize=20,
+        fontsize=18,
         pad=10,
     )
 
