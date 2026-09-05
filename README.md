@@ -56,6 +56,7 @@ The experiments were conducted with the following environment:
 - NumPy 2.2.6
 - SciPy 1.16.1
 - scikit-learn 1.7.1
+- Matplotlib 3.10.0
 
 Install the required Python packages using:
 
@@ -90,6 +91,7 @@ FE2MT/
 ├── data_loader.py
 ├── fe2mt.py
 ├── train.py
+├── visualize_results.py
 ├── requirements.txt
 ├── README.md
 └── .gitignore
@@ -97,7 +99,8 @@ FE2MT/
 
 - `data_loader.py`: data loading, preprocessing, sample splitting, and patch extraction.
 - `fe2mt.py`: implementation of the proposed FE2MT model.
-- `train.py`: model training, evaluation, and result recording.
+- `train.py`: model training, evaluation, checkpoint saving, and result recording.
+- `visualize_results.py`: whole-scene prediction and classification map visualization.
 - `figures/`: framework and classification result figures used in this repository.
 
 ## Usage
@@ -133,13 +136,25 @@ By default, the training configuration is:
 - Learning rate: 1e-4
 - Number of runs: 10
 
-Training logs and final results are automatically saved under:
+Training logs, checkpoints, and final results are automatically saved under:
 
 ```text
 outputs/<dataset_name>/
 ```
 
-Each run generates a separate training log, and `results.txt` summarizes the final results over all runs.
+For each run, `train.py` records the training log and saves the checkpoint corresponding to the highest test OA. After all runs are completed, `results.txt` summarizes the results over 10 runs and records the best run by OA.
+
+### Classification Map Visualization
+
+After training, classification maps can be generated using:
+
+```bash
+python visualize_results.py --dataset_root data/Houston2013
+python visualize_results.py --dataset_root data/Muufl
+python visualize_results.py --dataset_root data/Trento
+```
+
+By default, `visualize_results.py` automatically selects the run with the highest OA according to `results.txt`, loads the corresponding checkpoint, performs whole-scene prediction, and saves the visualization to the `figures/` directory.
 
 ## Results
 

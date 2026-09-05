@@ -18,6 +18,9 @@ def set_seed(seed: int) -> None:
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
@@ -161,6 +164,7 @@ def main() -> None:
         set_seed(run_seed)
 
         log_path = output_dir / f"training_log_run{run_number}.txt"
+        checkpoint_path = output_dir / f"best_model_run{run_number}.pth"
 
         print("=" * 72)
         print(
@@ -177,16 +181,18 @@ def main() -> None:
             num_classes,
         ) = get_dataloaders(args, project_root, run_seed)
 
-        model = FE2MT(
-            hsi_channels=hsi_channels,
-            lidar_channels=lidar_channels,
-            num_classes=num_classes,
-            patch_size=args.patch_size,
-            embed_dim=args.embed_dim,
-            depth=args.depth,
-            num_heads=args.num_heads,
-            dropout=args.dropout,
-        ).to(device)
+        model_config = {
+            "hsi_channels": hsi_channels,
+            "lidar_channels": lidar_channels,
+            "num_classes": num_classes,
+            "patch_size": args.patch_size,
+            "embed_dim": args.embed_dim,
+            "depth": args.depth,
+            "num_heads": args.num_heads,
+            "dropout": args.dropout,
+        }
+
+        model = FE2MT(**model_config).to(device)
 
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
@@ -215,6 +221,18 @@ def main() -> None:
                     best_oa = test_metrics["OA"]
                     best_epoch = epoch
                     best_metrics = test_metrics.copy()
+
+                    torch.save(
+                        {
+                            "model_state_dict": model.state_dict(),
+                            "model_config": model_config,
+                            "epoch": best_epoch,
+                            "metrics": best_metrics,
+                            "dataset": dataset_name,
+                            "seed": run_seed,
+                        },
+                        checkpoint_path,
+                    )
 
                 log = (
                     f"Epoch {epoch:03d}/{args.epochs} | "
@@ -247,6 +265,7 @@ def main() -> None:
     oa = np.array([metrics["OA"] for metrics in run_metrics])
     aa = np.array([metrics["AA"] for metrics in run_metrics])
     kappa = np.array([metrics["Kappa"] for metrics in run_metrics])
+    best_run = int(np.argmax(oa)) + 1
 
     final_lines = [
         f"Dataset: {dataset_name}",
@@ -265,6 +284,7 @@ def main() -> None:
 
     final_lines.extend(
         [
+            f"Best run by OA: {best_run}",
             f"OA:    {oa.mean() * 100:.2f} ± {oa.std() * 100:.2f}",
             f"AA:    {aa.mean() * 100:.2f} ± {aa.std() * 100:.2f}",
             f"Kappa: {kappa.mean() * 100:.2f} ± {kappa.std() * 100:.2f}",
