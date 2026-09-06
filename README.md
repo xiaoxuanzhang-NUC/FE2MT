@@ -20,9 +20,9 @@ Specifically, FE2MT first constructs modality-specific spatial or spectral-spati
 
 ## Datasets
 
-Experiments are conducted on three widely used HSI--LiDAR datasets: Houston2013, Muufl, and Trento.
+Experiments are conducted on three widely used HSI--LiDAR datasets: Houston2013, MUUFL, and Trento.
 
-For Houston2013 and Trento, 20 labeled samples per class are randomly selected for training, while 60 labeled samples per class are used for Muufl. The remaining labeled samples are used for testing. The random sampling procedure is repeated over 10 independent runs with different random seeds, and the final performance is reported in terms of the mean and standard deviation of the evaluation metrics.
+For Houston2013 and Trento, 20 labeled samples per class are randomly selected for training, while 60 labeled samples per class are used for MUUFL. The remaining labeled samples are used for testing. The random sampling procedure is repeated over 10 independent runs with different random seeds, and the final performance is reported in terms of the mean and standard deviation of the evaluation metrics.
 
 ### Data Preparation
 
@@ -34,7 +34,7 @@ data/
 │   ├── hsi.mat
 │   ├── lidar.mat
 │   └── gt.mat
-├── Muufl/
+├── MUUFL/
 │   ├── hsi.mat
 │   ├── lidar.mat
 │   └── gt.mat
@@ -75,7 +75,7 @@ FE2MT/
 │   │   ├── hsi.mat
 │   │   ├── lidar.mat
 │   │   └── gt.mat
-│   ├── Muufl/
+│   ├── MUUFL/
 │   │   ├── hsi.mat
 │   │   ├── lidar.mat
 │   │   └── gt.mat
@@ -113,10 +113,10 @@ Train FE2MT on the three datasets using the following commands.
 python train.py --dataset_root data/Houston2013
 ```
 
-### Muufl
+### MUUFL
 
 ```bash
-python train.py --dataset_root data/Muufl --train_per_class 60
+python train.py --dataset_root data/MUUFL --train_per_class 60
 ```
 
 ### Trento
@@ -127,7 +127,7 @@ python train.py --dataset_root data/Trento
 
 The experimental configuration is:
 
-- Training samples per class: 20 for Houston2013, 60 for Muufl, and 20 for Trento
+- Training samples per class: 20 for Houston2013, 60 for MUUFL, and 20 for Trento
 - Patch size: 12
 - Embedding dimension: 128
 - Transformer depth: 4
@@ -150,7 +150,7 @@ After training, classification maps can be generated using:
 
 ```bash
 python visualize_results.py --dataset_root data/Houston2013
-python visualize_results.py --dataset_root data/Muufl
+python visualize_results.py --dataset_root data/MUUFL
 python visualize_results.py --dataset_root data/Trento
 ```
 
@@ -163,7 +163,7 @@ The quantitative results are reported as the mean and standard deviation over 10
 | Dataset | OA (%) | AA (%) | Kappa (%) |
 |:---|---:|---:|---:|
 | Houston2013 | 95.65 ± 0.65 | 96.30 ± 0.53 | 95.30 ± 0.71 |
-| Muufl | 88.71 ± 0.63 | 88.98 ± 0.51 | 85.27 ± 0.78 |
+| MUUFL | 88.71 ± 0.63 | 88.98 ± 0.51 | 85.27 ± 0.78 |
 | Trento | 99.20 ± 0.37 | 98.71 ± 0.41 | 98.93 ± 0.49 |
 
 ### Classification Maps
@@ -181,7 +181,7 @@ The quantitative results are reported as the mean and standard deviation over 10
 </p>
 
 <p align="center">
-  Classification result on the Muufl dataset.
+  Classification result on the MUUFL dataset.
 </p>
 
 <p align="center">

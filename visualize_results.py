@@ -443,7 +443,7 @@ def main() -> None:
     if not available_datasets:
         raise FileNotFoundError(
             "No dataset result directories were found in outputs/. "
-            "Expected one or more of: Houston2013, Muufl, Trento."
+            "Expected one or more of: Houston2013, MUUFL, Trento."
         )
 
     print(
