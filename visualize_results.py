@@ -430,7 +430,7 @@ def main() -> None:
 
     dataset_names = [
         "Houston2013",
-        "Muufl",
+        "MUUFL",
         "Trento",
     ]
 
