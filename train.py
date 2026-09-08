@@ -161,6 +161,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--epochs", type=int, default=100)
     parser.add_argument("--batch_size", type=int, default=64)
     parser.add_argument("--lr", type=float, default=1e-4)
+    parser.add_argument("--min_lr", type=float, default=1e-6)
     parser.add_argument("--num_workers", type=int, default=0)
 
     parser.add_argument("--embed_dim", type=int, default=128)
@@ -232,6 +233,11 @@ def main() -> None:
 
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer,
+            T_max=args.epochs,
+            eta_min=args.min_lr,
+        )
 
         best_oa = -1.0
         best_epoch = 0
@@ -268,6 +274,9 @@ def main() -> None:
                             "metrics": best_metrics,
                             "dataset": dataset_name,
                             "seed": run_seed,
+                            "scheduler": "CosineAnnealingLR",
+                            "initial_lr": args.lr,
+                            "min_lr": args.min_lr,
                         },
                         checkpoint_path,
                     )
@@ -287,6 +296,8 @@ def main() -> None:
 
                 print(log)
                 log_file.write(log + "\n")
+
+                scheduler.step()
 
             best_log = (
                 f"Best result | Epoch {best_epoch} | "
