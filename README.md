@@ -128,7 +128,7 @@ python train.py --dataset_root data/Trento
 The experimental configuration is:
 
 - Training samples per class: 20 for Houston2013, 60 for MUUFL, and 20 for Trento
-- Patch size: 12
+- Patch size: 16
 - Embedding dimension: 128
 - Transformer depth: 4
 - Number of attention heads: 8
@@ -162,8 +162,8 @@ The quantitative results are reported as the mean and standard deviation over 10
 
 | Dataset | OA (%) | AA (%) | Kappa (%) |
 |:---|---:|---:|---:|
-| Houston2013 | 95.65 ± 0.65 | 96.30 ± 0.53 | 95.30 ± 0.71 |
-| MUUFL | 88.71 ± 0.63 | 88.98 ± 0.51 | 85.27 ± 0.78 |
+| Houston2013 | 96.54 ± 0.66 | 96.99 ± 0.52 | 96.26 ± 0.71 |
+| MUUFL | 89.67 ± 0.64 | 89.84 ± 0.48 | 86.49 ± 0.80 |
 | Trento | 99.20 ± 0.37 | 98.71 ± 0.41 | 98.93 ± 0.49 |
 
 ### Classification Maps

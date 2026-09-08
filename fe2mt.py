@@ -468,7 +468,7 @@ class FE2MT(nn.Module):
         hsi_channels: int = 144,
         lidar_channels: int = 1,
         num_classes: int = 15,
-        patch_size: int = 12,
+        patch_size: int = 16,
         embed_dim: int = 128,
         depth: int = 4,
         num_heads: int = 8,
