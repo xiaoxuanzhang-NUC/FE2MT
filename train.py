@@ -145,14 +145,14 @@ def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(description="Train FE2MT.")
 
-    parser.add_argument("--dataset_root", type=str, default="data/MUUFL")
+    parser.add_argument("--dataset_root", type=str, default="data/Houston2013")
     parser.add_argument(
         "--protocol",
         type=str,
         default="random_per_class",
         choices=["random_per_class", "random_percent"],
     )
-    parser.add_argument("--train_per_class", type=int, default=60)
+    parser.add_argument("--train_per_class", type=int, default=20)
     parser.add_argument("--train_percent", type=float, default=0.2)
 
     parser.add_argument("--patch_size", type=int, default=16)
